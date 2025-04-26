@@ -1,0 +1,11 @@
+registry.cn-hangzhou.aliyuncs.com:
+  username: ${ALIYUN_USERNAME}
+  password: ${ALIYUN_PASSWORD}
+
+docker.io:
+  username: ${DOCKER_USERNAME}
+  password: ${DOCKER_PASSWORD}
+
+k8s.gcr.io:
+  username: ${GCR_USERNAME}
+  password: ${GCR_PASSWORD}
