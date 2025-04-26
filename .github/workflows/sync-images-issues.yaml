@@ -1,0 +1,86 @@
+name: Sync Docker Images from Issues
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  sync-images:
+    if: contains(github.event.issue.title, 'image-sync')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Extract image information from issue
+        id: extract
+        run: |
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          echo "Processing issue body: $ISSUE_BODY"
+          
+          # 从issue body中提取源镜像和目标镜像信息
+          echo "IMAGES_CONFIG<<EOF" >> $GITHUB_ENV
+          echo "$ISSUE_BODY" | grep -v "^#" | grep -v "^<!--" | grep -v "^-->" | grep ":" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          # 生成简洁的镜像列表用于展示
+          echo "IMAGES_TABLE<<EOF" >> $GITHUB_ENV
+          echo "$ISSUE_BODY" | grep -v "^#" | grep -v "^<!--" | grep -v "^-->" | grep ":" | while read line; do
+            if [ ! -z "$line" ]; then
+              SOURCE=$(echo "$line" | cut -d':' -f1-2 | sed 's/:.* .*:/:/g')
+              TARGET=$(echo "$line" | cut -d':' -f3- | sed 's/^ //g')
+              echo "| \`$SOURCE\` | \`$TARGET\` |" >> $GITHUB_ENV
+            fi
+          done
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "Images config extracted"
+
+      - name: Create images config file
+        run: |
+          echo "${{ env.IMAGES_CONFIG }}" > custom-images.yaml
+          cat custom-images.yaml
+
+      - name: Sync images using image-syncer
+        id: sync
+        uses: hhyasdf/image-sync-action@v1.1
+        with:
+          auth_file: ./auth.yaml
+          images_file: ./custom-images.yaml
+          version: latest
+          proc: 6
+        env:
+          ALIYUN_USERNAME: ${{ secrets.ALIYUN_USERNAME }}
+          ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          GCR_USERNAME: ${{ secrets.GCR_USERNAME }}
+          GCR_PASSWORD: ${{ secrets.GCR_PASSWORD }}
+        continue-on-error: true
+
+      - name: Add comment to issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const syncResult = '${{ steps.sync.outcome }}' === 'success' ? '✅ 同步成功' : '❌ 同步失败';
+            const tableHeader = '| 源镜像 | 目标镜像 |\n| --- | --- |\n';
+            const imagesTable = '${{ env.IMAGES_TABLE }}';
+            const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+            
+            const body = `### ${syncResult}
+            
+            > 引用原镜像同步请求
+            
+            ${tableHeader}${imagesTable}
+            
+            同步时间: ${timestamp}
+            
+            ${syncResult === '✅ 同步成功' ? '所有镜像已成功同步到目标仓库，现在可以使用目标镜像地址了。' : '同步过程中遇到了一些问题，请检查镜像配置是否正确。'}`
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
