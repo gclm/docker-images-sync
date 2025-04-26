@@ -1,4 +1,4 @@
-registry.cn-hangzhou.aliyuncs.com:
+registry.cn-shanghai.aliyuncs.com:
   username: ${ALIYUN_USERNAME}
   password: ${ALIYUN_PASSWORD}
 

@@ -1,5 +1,1 @@
-docker.io/library/nginx:latest: registry.cn-hangzhou.aliyuncs.com/sealos/nginx:latest
-k8s.gcr.io/kube-apiserver:v1.24.0: registry.cn-hangzhou.aliyuncs.com/sealos/kube-apiserver:v1.24.0
-k8s.gcr.io/kube-controller-manager:v1.24.0: registry.cn-hangzhou.aliyuncs.com/sealos/kube-controller-manager:v1.24.0
-k8s.gcr.io/kube-scheduler:v1.24.0: registry.cn-hangzhou.aliyuncs.com/sealos/kube-scheduler:v1.24.0
-k8s.gcr.io/kube-proxy:v1.24.0: registry.cn-hangzhou.aliyuncs.com/sealos/kube-proxy:v1.24.0 
+ghcr.io/labring-actions/devbox/go-1.23.0:13aacd8: registry.cn-shanghai.aliyuncs.com/gclm/devbox/go-1.23.0:13aacd8

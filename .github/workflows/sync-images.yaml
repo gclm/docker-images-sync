@@ -8,9 +8,6 @@ jobs:
   sync-images:
     if: contains(github.event.issue.title, 'image-sync')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./docker-images-sync
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -41,15 +38,15 @@ jobs:
 
       - name: Create images config file
         run: |
-          echo "${{ env.IMAGES_CONFIG }}" > ./custom-images.yaml
-          cat ./custom-images.yaml
+          echo "${{ env.IMAGES_CONFIG }}" > custom-images.yaml
+          cat custom-images.yaml
 
       - name: Sync images using image-syncer
         id: sync
         uses: hhyasdf/image-sync-action@v1.1
         with:
-          auth_file: ./docker-images-sync/auth.yaml
-          images_file: ./docker-images-sync/custom-images.yaml
+          auth_file: auth.yaml
+          images_file: custom-images.yaml
           version: latest
           proc: 6
         env:
@@ -86,4 +83,4 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: body
-            }) 
+            })
